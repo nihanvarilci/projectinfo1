@@ -1,0 +1,258 @@
+package com.example.projectinformation;
+
+import android.app.DatePickerDialog;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
+import android.text.InputType;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.DatePicker;
+import android.widget.EditText;
+import android.widget.Spinner;
+import android.widget.Toast;
+
+import com.example.projectinformation.db.NotesHelper;
+import com.example.projectinformation.db.ProjectHelper;
+import com.example.projectinformation.db.models.Notes;
+import com.example.projectinformation.db.models.Project;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Locale;
+
+
+public class AddProjectActivity extends ActionBarActivity {
+    public static final String PROJECT_ID = "PROJECT_ID";
+    private static final int RESULT_NOTES_ADDED = 200;
+    /////yeni ekledim
+    Spinner spinner;
+    ArrayAdapter<CharSequence> adapter;
+    private DatePickerDialog fromDatePickerDialog;
+    private DatePickerDialog finishDatePickerDialog;
+
+    private ArrayList<String> notesList;
+    /////
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_add);
+
+        final EditText startDateEditText = (EditText) findViewById(R.id.startDate);
+
+        startDateEditText.setInputType(InputType.TYPE_NULL);
+        startDateEditText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                fromDatePickerDialog.show();
+            }
+        });
+
+
+        startDateEditText.requestFocus();
+        startDateEditText.setError(null);
+
+        Calendar newCalendar = Calendar.getInstance();
+        final SimpleDateFormat dateFormatter = new SimpleDateFormat("dd-MM-yyyy", Locale.US);
+        fromDatePickerDialog = new DatePickerDialog(AddProjectActivity.this, new DatePickerDialog.OnDateSetListener() {
+
+            public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                Calendar newDate = Calendar.getInstance();
+                newDate.set(year, monthOfYear, dayOfMonth);
+                startDateEditText.setText(dateFormatter.format(newDate.getTime()));
+            }
+
+        }, newCalendar.get(Calendar.YEAR), newCalendar.get(Calendar.MONTH), newCalendar.get(Calendar.DAY_OF_MONTH));
+
+        final EditText finishDateEditText = (EditText) findViewById(R.id.finishDate);
+
+        finishDateEditText.setInputType(InputType.TYPE_NULL);
+        finishDateEditText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finishDatePickerDialog.show();
+            }
+        });
+
+
+        finishDateEditText.requestFocus();
+        finishDateEditText.setError(null);
+
+        finishDatePickerDialog = new DatePickerDialog(AddProjectActivity.this, new DatePickerDialog.OnDateSetListener() {
+
+            public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                Calendar newDate = Calendar.getInstance();
+                newDate.set(year, monthOfYear, dayOfMonth);
+                finishDateEditText.setText(dateFormatter.format(newDate.getTime()));
+            }
+
+        }, newCalendar.get(Calendar.YEAR), newCalendar.get(Calendar.MONTH), newCalendar.get(Calendar.DAY_OF_MONTH));
+
+
+        //// yeni ekledim/////////////////////////////////////////////////////////
+        spinner =(Spinner)findViewById(R.id.analysts);
+        adapter = ArrayAdapter.createFromResource(this,R.array.analys,android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){
+            @Override
+            public void onItemSelected(AdapterView<?>parent, View view, int position, long id){
+                Toast.makeText(getBaseContext(),parent.getItemIdAtPosition(position) + "selected", Toast.LENGTH_LONG).show();
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+
+        });
+///////////////////////////////////////////////////////
+
+        Button saveButton = (Button) findViewById(R.id.saveButton);
+        final Button notes = (Button) findViewById(R.id.note);
+
+
+        notes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(AddProjectActivity.this, "Note Button", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(AddProjectActivity.this, NoteActivity.class);
+                intent.putExtra(PROJECT_ID,-1);
+                startActivityForResult(intent, RESULT_NOTES_ADDED);
+            }
+        });
+
+        Button milestone = (Button) findViewById(R.id.milestone);
+        milestone.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(AddProjectActivity.this, "Milestone Button", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(AddProjectActivity.this, MilestoneActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        saveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                EditText nameEditText = (EditText) findViewById(R.id.name);
+                Spinner testerSpinner = (Spinner) findViewById(R.id.tester);
+                Spinner qualityAssuranceSpinner = (Spinner) findViewById(R.id.qualityassurance);
+                Spinner analystsSpinner = (Spinner) findViewById(R.id.analysts);
+                Spinner managerSpinner = (Spinner) findViewById(R.id.manager);
+                EditText codeEditText = (EditText) findViewById(R.id.code);
+                EditText effortEditText = (EditText) findViewById(R.id.effort);
+                EditText startDateEditText = (EditText) findViewById(R.id.startDate);
+                EditText finishDateEditText = (EditText) findViewById(R.id.finishDate);
+
+
+
+                String name = nameEditText.getText().toString();
+                String tester = testerSpinner.getSelectedItem().toString();
+                String qualityAssurance = qualityAssuranceSpinner.getSelectedItem().toString();
+                String analysts = analystsSpinner.getSelectedItem().toString();
+                String manager = managerSpinner.getSelectedItem().toString();
+
+                String code  = codeEditText.getText().toString();
+                String effort = effortEditText.getText().toString();
+                String startDate = startDateEditText.getText().toString();
+                String finishDate = finishDateEditText.getText().toString();
+
+
+
+                if (name == null && name.equals("")) {
+                    Toast.makeText(getApplicationContext(),"Name must be filled!",Toast.LENGTH_SHORT).show();
+                } else if (tester == null && tester.equals("") ) {
+                    Toast.makeText(getApplicationContext(),"Tester must be filled!",Toast.LENGTH_SHORT).show();
+                } else if (qualityAssurance == null && qualityAssurance.equals("")) {
+                    Toast.makeText(getApplicationContext(),"Quality Assurance must be filled!",Toast.LENGTH_SHORT).show();
+                } else if (analysts == null && analysts.equals("")) {
+                    Toast.makeText(getApplicationContext(),"Analysts must be filled!",Toast.LENGTH_SHORT).show();
+                } else if (manager == null && manager.equals("")) {
+                    Toast.makeText(getApplicationContext(),"Manager must be filled!",Toast.LENGTH_SHORT).show();
+                } else if (code == null && code.equals("")){
+                    Toast.makeText(getApplicationContext(),"Code must be filled!",Toast.LENGTH_SHORT).show();
+                }else if(effort == null && effort.equals("")){
+                    Toast.makeText(getApplicationContext(),"Effort must be filled!", Toast.LENGTH_SHORT).show();
+                }else if (startDate == null && startDate.equals("")){
+                    Toast.makeText(getApplicationContext(),"Start Date must be filled!", Toast.LENGTH_SHORT).show();
+                }else if (finishDate == null && finishDate.equals("")){
+                    Toast.makeText(getApplicationContext(),"Finish Date must be filled!", Toast.LENGTH_SHORT).show();
+                }
+
+
+                Project project = new Project();
+                project.setName(name);
+                project.setTester(tester);
+                project.setQualityAssurance(qualityAssurance);
+                project.setManager(manager);
+                project.setAnalyzer(analysts);
+                project.setCode(code);
+                project.setEffort(effort);
+                project.setStartDate(startDate);
+                project.setFinishDate(finishDate);
+
+                ProjectHelper projectHelper = ProjectHelper.getInstance(AddProjectActivity.this);
+                int projectId = projectHelper.insert(project);
+
+                if (notesList != null && !notesList.isEmpty()) {
+                    NotesHelper notesHelper = new NotesHelper();
+                    for (String noteText : notesList) {
+                        Notes note = new Notes();
+                        note.setProjectId(projectId);
+                        note.setText(noteText);
+                        notesHelper.insert(note);
+                    }
+                }
+
+                finish();
+
+            }
+        });
+
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode==1000){
+            Log.i("From add project: ", "Geldi");
+        } else if (requestCode == RESULT_NOTES_ADDED) {
+            notesList = data.getStringArrayListExtra(NoteActivity.ADD_NOTES);
+        }
+    }
+
+}
