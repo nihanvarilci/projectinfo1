@@ -1,0 +1,138 @@
+package com.example.projectinformation;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
+import android.view.ActionMode;
+import android.view.LayoutInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.PopupMenu;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.example.projectinformation.db.NotesHelper;
+import com.example.projectinformation.db.ProjectHelper;
+import com.example.projectinformation.db.models.Notes;
+import com.example.projectinformation.db.models.Project;
+
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class NoteActivity extends ActionBarActivity {
+    public static final String ADD_NOTES = "ADD_NOTES";
+    final ArrayList<String> notesStringList = new ArrayList<>();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.note);
+        Button saveNotesButton = (Button) findViewById(R.id.saveButton);
+        final EditText noteEditText = (EditText) findViewById(R.id.note1);
+
+        int projectId = getIntent().getIntExtra(AddProjectActivity.PROJECT_ID, -2);
+        NotesHelper notesHelper = NotesHelper.getInstance(NoteActivity.this);
+        final List<Notes> notesList = notesHelper.getNoteListByProjectId(projectId);
+
+        for (Notes notes : notesList) {
+            notesStringList.add(notes.getText());
+        }
+
+        notesStringList.add("sadasds");
+
+        ListView listView = (ListView) findViewById(R.id.listView);
+        final MySimpleStringArrayAdapter adapter = new MySimpleStringArrayAdapter(this,
+                notesStringList);
+        listView.setAdapter(adapter);
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
+                Toast.makeText(getApplicationContext(),"delete row", Toast.LENGTH_SHORT).show();
+
+                PopupMenu popupMenu = new PopupMenu(NoteActivity.this, view);
+                popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.action_delete:
+                                adapter.remove(adapter.getItem(position));
+                                return true;
+                        }
+                        return false;
+                    }
+                });
+                popupMenu.inflate(R.menu.popup_menu);
+                popupMenu.show();
+
+            }
+        });
+
+        saveNotesButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(NoteActivity.this,"save",Toast.LENGTH_SHORT).show();
+                adapter.add(noteEditText.getText().toString());
+                noteEditText.setText("");
+            }
+        });
+
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode==1000){
+            Log.i("From add project: ","Geldi");
+        }
+    }
+
+
+    public class MySimpleStringArrayAdapter extends ArrayAdapter<String> {
+        private final Context context;
+        private final List<String> values;
+
+        public MySimpleStringArrayAdapter(Context context, List<String> values) {
+            super(context, -1, values);
+            this.context = context;
+            this.values = values;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            LayoutInflater inflater = (LayoutInflater) context
+                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            TextView textView = (TextView)inflater.inflate(R.layout.listview_row, parent, false);
+            textView.setText(values.get(position));
+
+            return textView;
+        }
+        
+    }
+
+    @Override
+    public void onBackPressed() {
+        Intent data = new Intent();
+        data.putStringArrayListExtra(ADD_NOTES, notesStringList);
+
+        if(getParent() == null) {
+            setResult(Activity.RESULT_OK,data);
+        } else{
+            getParent().setResult(Activity.RESULT_OK,data);
+        }
+
+        super.onBackPressed();
+    }
+}
+
